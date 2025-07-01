@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Productivity Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .dark .glass-card {
+            background: rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .chart-container {
+            position: relative;
+            height: 160px;
+            width: 100%;
+        }
+        @media (min-width: 640px) {
+            .chart-container {
+                height: 200px;
+            }
+        }
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.5s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="h-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
+    <div class="container mx-auto p-2 sm:p-4 max-w-4xl h-full w-full">
+        <div class="flex flex-col h-full">
+            <!-- Header -->
+            <header class="flex justify-between items-center mb-2 sm:mb-6 px-2 sm:px-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white">
+                        <i class="fas fa-clock text-xl"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold">Productivity Tracker</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:inline"></i>
+                    </button>
+                    <div class="relative">
+                        <button id="user-menu" class="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                            <i class="fas fa-user"></i>
+                        </button>
+                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10">
+                            <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">Profile</a>
+                            <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">Settings</a>
+                            <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">Sign out</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="flex-1 overflow-hidden">
+                <div class="flex h-full">
+                    <!-- Sidebar -->
+                    <aside class="w-64 pr-4 hidden md:block">
+                        <nav class="space-y-1">
+                            <button data-tab="dashboard" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-indigo-100 dark:bg-gray-700 text-indigo-700 dark:text-indigo-300">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>Dashboard</span>
+                            </button>
+                            <button data-tab="analytics" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
+                                <i class="fas fa-chart-pie"></i>
+                                <span>Analytics</span>
+                            </button>
+                            <button data-tab="history" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
+                                <i class="fas fa-history"></i>
+                                <span>History</span>
+                            </button>
+                            <button data-tab="settings" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
+                                <i class="fas fa-cog"></i>
+                                <span>Settings</span>
+                            </button>
+                        </nav>
+                        <div class="mt-8 glass-card p-4 rounded-lg">
+                            <h3 class="font-medium mb-2">Tracking Status</h3>
+                            <div class="flex items-center justify-between">
+                                <span id="tracking-status" class="text-sm">Active</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="tracking-toggle" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <!-- Mobile Navigation -->
+                    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-lg z-10">
+                        <div class="flex justify-around">
+                            <button data-tab="dashboard" class="tab-btn flex flex-col items-center py-3 px-4 text-indigo-600 dark:text-indigo-400">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span class="text-xs mt-1">Dashboard</span>
+                            </button>
+                            <button data-tab="analytics" class="tab-btn flex flex-col items-center py-3 px-4">
+                                <i class="fas fa-chart-pie"></i>
+                                <span class="text-xs mt-1">Analytics</span>
+                            </button>
+                            <button data-tab="history" class="tab-btn flex flex-col items-center py-3 px-4">
+                                <i class="fas fa-history"></i>
+                                <span class="text-xs mt-1">History</span>
+                            </button>
+                            <button data-tab="settings" class="tab-btn flex flex-col items-center py-3 px-4">
+                                <i class="fas fa-cog"></i>
+                                <span class="text-xs mt-1">Settings</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Content Area -->
+                    <div class="flex-1 overflow-y-auto pb-16 md:pb-0">
+                        <!-- Dashboard Tab -->
+                        <div id="dashboard-tab" class="tab-content p-4 fade-in">
+                            <h2 class="text-xl font-bold mb-6">Today's Overview</h2>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div class="glass-card p-4 rounded-lg">
+                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Time</h3>
+                                    <p class="text-2xl font-bold">6h 42m</p>
+                                    <p class="text-sm text-green-500">+12% from yesterday</p>
+                                </div>
+                                <div class="glass-card p-4 rounded-lg">
+                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Productive Time</h3>
+                                    <p class="text-2xl font-bold">4h 18m</p>
+                                    <p class="text-sm text-green-500">64% of total</p>
+                                </div>
+                                <div class="glass-card p-4 rounded-lg">
+                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Productivity Score</h3>
+                                    <div class="flex items-center">
+                                        <div class="relative w-12 h-12 mr-3">
+                                            <svg class="w-full h-full" viewBox="0 0 36 36">
+                                                <path
+                                                    d="M18 2.0845
+                                                        a 15.9155 15.9155 0 0 1 0 31.831
+                                                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                    fill="none"
+                                                    stroke="#e5e7eb"
+                                                    stroke-width="3"
+                                                />
+                                                <path
+                                                    id="dashboard-score-circle"
+                                                    d="M18 2.0845
+                                                        a 15.9155 15.9155 0 0 1 0 31.831
+                                                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                    fill="none"
+                                                    stroke="#4f46e5"
+                                                    stroke-width="3"
+                                                    stroke-dasharray="78, 100"
+                                                />
+                                            </svg>
+                                            <div class="absolute inset-0 flex items-center justify-center text-xs font-bold">78</div>
+                                        </div>
+                                        <span class="text-sm">Good</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div class="glass-card p-4 rounded-lg">
+                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Time Distribution</h3>
+                                    <div class="chart-container">
+                                        <canvas id="dashboard-chart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="glass-card p-4 rounded-lg">
+                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Top Activities</h3>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <div class="flex justify-between text-sm mb-1">
+                                                <span>GitHub</span>
+                                                <span>2h 15m</span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                                <div class="bg-indigo-600 h-2 rounded-full" style="width: 45%"></div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between text-sm mb-1">
+                                                <span>Notion</span>
+                                                <span>1h 30m</span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                                <div class="bg-indigo-600 h-2 rounded-full" style="width: 30%"></div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between text-sm mb-1">
+                                                <span>YouTube</span>
+                                                <span>1h 10m</span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                                <div class="bg-red-500 h-2 rounded-full" style="width: 25%"></div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between text-sm mb-1">
+                                                <span>Twitter</span>
+                                                <span>45m</span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                                <div class="bg-red-500 h-2 rounded-full" style="width: 18%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="glass-card p-2 sm:p-4 rounded-lg">
+                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Weekly Trend</h3>
+                                <div class="chart-container">
+                                    <canvas id="weekly-trend-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Analytics Tab -->
+                        <div id="analytics-tab" class="tab-content p-4 hidden fade-in">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-bold">Analytics</h2>
+                                <button id="demo-analytics-btn" class="px-3 py-1 bg-indigo-100 dark:bg-gray-700 text-indigo-700 dark:text-indigo-300 rounded text-sm">
+                                    Load Demo Data
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div class="glass-card p-4 rounded-lg">
+                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Time Distribution</h3>
+                                    <div class="chart-container">
+                                        <canvas id="analytics-pie-chart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="glass-card p-4 rounded-lg">
+                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Daily Breakdown</h3>
+                                    <div class="chart-container">
+                                        <canvas id="analytics-bar-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="glass-card p-2 sm:p-4 rounded-lg mb-4 sm:mb-6">
+                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Productivity Over Time</h3>
+                                <div class="chart-container">
+                                    <canvas id="productivity-line-chart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="glass-card p-4 rounded-lg">
+                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Category Breakdown</h3>
+                                <div class="overflow-x-auto text-xs sm:text-sm">
+                                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                        <thead>
+                                            <tr>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Time</th>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Percentage</th>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Trend</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                            <tr>
+                                                <td class="px-4 py-2 whitespace-nowrap">Work</td>
+                                                <td class="px-4 py-2 whitespace-nowrap">12h 45m</td>
+                                                <td class="px-4 py-2 whitespace-nowrap">42%</td>
+                                                <td class="px-4 py-2 whitespace-nowrap text-green-500"><i class="fas fa-arrow-up"></i> 8%</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-2 whitespace-nowrap">Learning</td>
+                                                <td class="px-4 py-2 whitespace-nowrap">8h 30m</td>
+                                                <td class="px-4 py-2 whitespace-nowrap">28%</td>
+                                                <td class="px-4 py-2 whitespace-nowrap text-green-500"><i class="fas fa-arrow-up"></i> 5%</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-2 whitespace-nowrap">Social Media</td>
+                                                <td class="px-4 py-2 whitespace-nowrap">5h 15m</td>
+                                                <td class="px-4 py-2 whitespace-nowrap">17%</td>
+                                                <td class="px-4 py-2 whitespace-nowrap text-red-500"><i class="fas fa-arrow-down"></i> 3%</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-2 whitespace-nowrap">Entertainment</td>
+                                                <td class="px-4 py-2 whitespace-nowrap">3h 30m</td>
+                                                <td class="px-4 py-2 whitespace-nowrap">12%</td>
+                                                <td class="px-4 py-2 whitespace-nowrap text-red-500"><i class="fas fa-arrow-down"></i> 10%</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- History Tab -->
+                        <div id="history-tab" class="tab-content p-4 hidden fade-in">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-bold">Activity History</h2>
+                                <div class="flex space-x-2">
+                                    <button id="demo-history-btn" class="px-3 py-1 bg-indigo-100 dark:bg-gray-700 text-indigo-700 dark:text-indigo-300 rounded text-sm">
+                                        Load Demo Data
+                                    </button>
+                                    <button class="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm">
+                                        <i class="fas fa-download mr-1"></i> Export
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="glass-card p-2 sm:p-4 rounded-lg mb-2 sm:mb-4">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <div class="relative">
+                                        <input type="text" placeholder="Search domains..." class="pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <select class="border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                            <option>All Categories</option>
+                                            <option>Productive</option>
+                                            <option>Unproductive</option>
+                                        </select>
+                                        <input type="date" class="border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="glass-card rounded-lg overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                        <thead class="bg-gray-50 dark:bg-gray-800">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Website</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Time Spent</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="history-table-body" class="divide-y divide-gray-200 dark:divide-gray-700">
+                                            <!-- Demo data will be inserted here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="px-6 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                                        Showing <span class="font-medium">1</span> to <span class="font-medium">5</span> of <span class="font-medium">24</span> entries
+                                    </div>
+                                    <div class="flex space-x-1">
+                                        <button class="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm">
+                                            Previous
+                                        </button>
+                                        <button class="px-3 py-1 rounded border border-indigo-500 bg-indigo-500 text-white text-sm">
+                                            1
+                                        </button>
+                                        <button class="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm">
+                                            2
+                                        </button>
+                                        <button class="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm">
+                                            3
+                                        </button>
+                                        <button class="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm">
+                                            Next
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Settings Tab -->
+                        <div id="settings-tab" class="tab-content p-4 hidden fade-in">
+                            <h2 class="text-xl font-bold mb-6">Settings</h2>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="md:col-span-2 space-y-6">
+                                    <div class="glass-card p-4 rounded-lg">
+                                        <h3 class="text-lg font-medium mb-4">Tracking Preferences</h3>
+                                        <div class="space-y-4">
+                                            <div>
+                                                <label class="block text-sm font-medium mb-1">Work Hours</label>
+                                                <div class="flex space-x-2">
+                                                    <select class="border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                                        <option>9:00 AM</option>
+                                                        <option selected>8:00 AM</option>
+                                                        <option>7:00 AM</option>
+                                                    </select>
+                                                    <span class="flex items-center">to</span>
+                                                    <select class="border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                                        <option>5:00 PM</option>
+                                                        <option selected>6:00 PM</option>
+                                                        <option>7:00 PM</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium mb-1">Daily Time Limits</label>
+                                                <div class="space-y-2">
+                                                    <div class="flex items-center justify-between">
+                                                        <span class="text-sm">Social Media</span>
+                                                        <div class="flex items-center space-x-2">
+                                                            <input type="number" value="60" class="w-16 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                                            <span class="text-sm">minutes</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex items-center justify-between">
+                                                        <span class="text-sm">Entertainment</span>
+                                                        <div class="flex items-center space-x-2">
+                                                            <input type="number" value="90" class="w-16 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                                            <span class="text-sm">minutes</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="glass-card p-4 rounded-lg">
+                                        <h3 class="text-lg font-medium mb-4">Website Categories</h3>
+                                        <div class="space-y-4">
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <p class="font-medium">github.com</p>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400">Currently: Productive</p>
+                                                </div>
+                                                <select class="border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                                    <option>Productive</option>
+                                                    <option>Unproductive</option>
+                                                    <option>Neutral</option>
+                                                </select>
+                                            </div>
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <p class="font-medium">youtube.com</p>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400">Currently: Unproductive</p>
+                                                </div>
+                                                <select class="border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                                    <option>Productive</option>
+                                                    <option selected>Unproductive</option>
+                                                    <option>Neutral</option>
+                                                </select>
+                                            </div>
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <p class="font-medium">twitter.com</p>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400">Currently: Unproductive</p>
+                                                </div>
+                                                <select class="border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                                    <option>Productive</option>
+                                                    <option selected>Unproductive</option>
+                                                    <option>Neutral</option>
+                                                </select>
+                                            </div>
+                                            <button class="w-full mt-4 px-4 py-2 bg-indigo-100 dark:bg-gray-700 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-gray-600 transition-colors">
+                                                + Add Custom Domain
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-6">
+                                    <div class="glass-card p-4 rounded-lg">
+                                        <h3 class="text-lg font-medium mb-4">Appearance</h3>
+                                        <div class="space-y-4">
+                                            <div>
+                                                <label class="block text-sm font-medium mb-2">Theme</label>
+                                                <div class="flex space-x-4">
+                                                    <button class="theme-option flex flex-col items-center" data-theme="light">
+                                                        <div class="w-16 h-10 rounded border-2 border-indigo-500 bg-white mb-1"></div>
+                                                        <span class="text-xs">Light</span>
+                                                    </button>
+                                                    <button class="theme-option flex flex-col items-center" data-theme="dark">
+                                                        <div class="w-16 h-10 rounded border-2 border-gray-300 dark:border-indigo-500 bg-gray-800 mb-1"></div>
+                                                        <span class="text-xs">Dark</span>
+                                                    </button>
+                                                    <button class="theme-option flex flex-col items-center" data-theme="system">
+                                                        <div class="w-16 h-10 rounded border-2 border-gray-300 bg-gradient-to-r from-white to-gray-800 mb-1"></div>
+                                                        <span class="text-xs">System</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium mb-2">Accent Color</label>
+                                                <div class="flex space-x-2">
+                                                    <button class="w-8 h-8 rounded-full bg-indigo-500 border-2 border-indigo-700"></button>
+                                                    <button class="w-8 h-8 rounded-full bg-emerald-500 border-2 border-gray-300"></button>
+                                                    <button class="w-8 h-8 rounded-full bg-rose-500 border-2 border-gray-300"></button>
+                                                    <button class="w-8 h-8 rounded-full bg-amber-500 border-2 border-gray-300"></button>
+                                                    <button class="w-8 h-8 rounded-full bg-violet-500 border-2 border-gray-300"></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="glass-card p-4 rounded-lg">
+                                        <h3 class="text-lg font-medium mb-4">Notifications</h3>
+                                        <div class="space-y-3">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-sm">Daily Summary</span>
+                                                <label class="relative inline-flex items-center cursor-pointer">
+                                                    <input type="checkbox" class="sr-only peer" checked>
+                                                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                                                </label>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-sm">Time Limit Warnings</span>
+                                                <label class="relative inline-flex items-center cursor-pointer">
+                                                    <input type="checkbox" class="sr-only peer" checked>
+                                                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                                                </label>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-sm">Weekly Report</span>
+                                                <label class="relative inline-flex items-center cursor-pointer">
+                                                    <input type="checkbox" class="sr-only peer">
+                                                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="glass-card p-4 rounded-lg">
+                                        <h3 class="text-lg font-medium mb-4">Account</h3>
+                                        <div class="space-y-4">
+                                            <div>
+                                                <label class="block text-sm font-medium mb-1">Email</label>
+                                                <input type="email" value="user@example.com" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium mb-1">Password</label>
+                                                <input type="password" placeholder="••••••••" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                            </div>
+                                            <button class="w-full mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                                                Save Changes
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        // Check for saved user preference or system preference
+        const savedTheme = localStorage.getItem('theme') || 'system';
+        if (savedTheme === 'dark' || (savedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        });
+
+        // Theme options
+        document.querySelectorAll('.theme-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const theme = option.dataset.theme;
+                if (theme === 'system') {
+                    localStorage.removeItem('theme');
+                    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                        html.classList.add('dark');
+                    } else {
+                        html.classList.remove('dark');
+                    }
+                } else {
+                    localStorage.setItem('theme', theme);
+                    html.classList.toggle('dark', theme === 'dark');
+                }
+            });
+        });
+
+        // User dropdown
+        const userMenu = document.getElementById('user-menu');
+        const userDropdown = document.getElementById('user-dropdown');
+
+        userMenu.addEventListener('click', () => {
+            userDropdown.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!userMenu.contains(e.target) && !userDropdown.contains(e.target)) {
+                userDropdown.classList.add('hidden');
+            }
+        });
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.dataset.tab + '-tab';
+                
+                // Hide all tabs
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.add('hidden');
+                });
+                
+                // Show selected tab
+                document.getElementById(tabId).classList.remove('hidden');
+                
+                // Update active state
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('bg-indigo-100', 'dark:bg-gray-700', 'text-indigo-700', 'dark:text-indigo-300');
+                    b.classList.add('hover:bg-gray-200', 'dark:hover:bg-gray-700');
+                });
+                
+                btn.classList.add('bg-indigo-100', 'dark:bg-gray-700', 'text-indigo-700', 'dark:text-indigo-300');
+                btn.classList.remove('hover:bg-gray-200', 'dark:hover:bg-gray-700');
+            });
+        });
+
+        // Tracking toggle
+        const trackingToggle = document.getElementById('tracking-toggle');
+        const trackingStatus = document.getElementById('tracking-status');
+
+        trackingToggle.addEventListener('change', () => {
+            if (trackingToggle.checked) {
+                trackingStatus.textContent = 'Active';
+            } else {
+                trackingStatus.textContent = 'Paused';
+            }
+        });
+
+        // Demo data for Analytics
+        document.getElementById('demo-analytics-btn').addEventListener('click', () => {
+            // Pie Chart
+            updatePieChart([35, 25, 20, 15, 5], ['Work', 'Learning', 'Social', 'Entertainment', 'Other']);
+            
+            // Bar Chart
+            updateBarChart([3.5, 4.2, 5.1, 4.8, 6.2, 4.5, 2.8], ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
+            
+            // Line Chart
+            updateLineChart([65, 68, 72, 70, 75, 78, 80], ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
+            
+            // Show notification
+            showNotification('Demo analytics data loaded successfully!');
+        });
+
+        // Demo data for History
+        document.getElementById('demo-history-btn').addEventListener('click', () => {
+            const demoData = [
+                { website: 'github.com', category: 'Productive', date: '2023-06-15', time: '2h 15m' },
+                { website: 'youtube.com', category: 'Unproductive', date: '2023-06-15', time: '1h 10m' },
+                { website: 'notion.so', category: 'Productive', date: '2023-06-15', time: '1h 30m' },
+                { website: 'twitter.com', category: 'Unproductive', date: '2023-06-15', time: '45m' },
+                { website: 'stackoverflow.com', category: 'Productive', date: '2023-06-14', time: '1h 05m' }
+            ];
+            
+            const tableBody = document.getElementById('history-table-body');
+            tableBody.innerHTML = '';
+            
+            demoData.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 dark:hover:bg-gray-800';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                <i class="fas fa-globe"></i>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium">${item.website}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.category === 'Productive' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${item.category}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        ${item.date}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        ${item.time}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-500 mr-3">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="text-red-600 hover:text-red-900">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            showNotification('Demo history data loaded successfully!');
+        });
+
+        // Show notification
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'fixed bottom-4 right-4 px-6 py-3 bg-gray-800 text-white rounded-lg shadow-lg flex items-center animate-fade-in-up';
+            notification.innerHTML = `
+                <i class="fas fa-check-circle mr-2 text-green-400"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('opacity-0', 'translate-y-2', 'transition-all', 'duration-300');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // Initialize charts
+        function initCharts() {
+            // Dashboard pie chart
+            const dashboardCtx = document.getElementById('dashboard-chart').getContext('2d');
+            new Chart(dashboardCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Productive', 'Unproductive'],
+                    datasets: [{
+                        data: [64, 36],
+                        backgroundColor: ['#4f46e5', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Weekly trend chart
+            const weeklyTrendCtx = document.getElementById('weekly-trend-chart').getContext('2d');
+            new Chart(weeklyTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Productive Time',
+                        data: [3.5, 4.2, 5.1, 4.8, 6.2, 4.5, 2.8],
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + 'h';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            // Analytics pie chart
+            const pieCtx = document.getElementById('analytics-pie-chart').getContext('2d');
+            window.pieChart = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Work', 'Learning', 'Social', 'Entertainment', 'Other'],
+                    datasets: [{
+                        data: [35, 25, 20, 15, 5],
+                        backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#6b7280'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Analytics bar chart
+            const barCtx = document.getElementById('analytics-bar-chart').getContext('2d');
+            window.barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [
+                        {
+                            label: 'Productive',
+                            data: [3.5, 4.2, 5.1, 4.8, 6.2, 4.5, 2.8],
+                            backgroundColor: '#4f46e5'
+                        },
+                        {
+                            label: 'Unproductive',
+                            data: [1.2, 0.8, 1.5, 1.0, 0.5, 2.0, 3.5],
+                            backgroundColor: '#ef4444'
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            stacked: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + 'h';
+                                }
+                            }
+                        },
+                        x: {
+                            stacked: true
+                        }
+                    }
+                }
+            });
+
+            // Productivity line chart
+            const lineCtx = document.getElementById('productivity-line-chart').getContext('2d');
+            window.lineChart = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Productivity Score',
+                        data: [65, 68, 72, 70, 75, 78, 80],
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update pie chart data
+        function updatePieChart(data, labels) {
+            window.pieChart.data.datasets[0].data = data;
+            window.pieChart.data.labels = labels;
+            window.pieChart.update();
+        }
+
+        // Update bar chart data
+        function updateBarChart(productiveData, labels) {
+            window.barChart.data.datasets[0].data = productiveData;
+            // Add some unproductive time (random for demo)
+            const unproductiveData = productiveData.map(val => Math.max(0, 8 - val - Math.random() * 2));
+            window.barChart.data.datasets[1].data = unproductiveData;
+            window.barChart.data.labels = labels;
+            window.barChart.update();
+        }
+
+        // Update line chart data
+        function updateLineChart(data, labels) {
+            window.lineChart.data.datasets[0].data = data;
+            window.lineChart.data.labels = labels;
+            window.lineChart.update();
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            
+            // Set dashboard score circle
+            const circle = document.getElementById('dashboard-score-circle');
+            const radius = circle.r.baseVal.value;
+            const circumference = radius * 2 * Math.PI;
+            circle.style.strokeDasharray = `${circumference} ${circumference}`;
+            circle.style.strokeDashoffset = circumference - (78 / 100) * circumference;
+        });
+    </script>
+</body>
+</html>
