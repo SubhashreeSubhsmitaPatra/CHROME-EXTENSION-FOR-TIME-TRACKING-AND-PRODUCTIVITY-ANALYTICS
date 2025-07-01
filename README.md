@@ -165,3 +165,4 @@ As digital distractions escalate, this extension provides a practical solution f
 
 *output*:-
 
+![Image](https://github.com/user-attachments/assets/bf124f9a-9d53-4c1e-8ed3-5a5c7d6a5993)
